@@ -167,3 +167,12 @@ class PeriodicTaskSerializer(serializers.ModelSerializer):
 
     def get_args(self, obj):
         return json.loads(obj.args)
+class PycodeSerializer(serializers.ModelSerializer):
+    """
+    驱动代码序列化
+    """
+
+    class Meta:
+        model = models.Pycode
+        fields = '__all__'
+        # fields = ['id', 'update_time', 'code', 'project', 'desc', 'name']

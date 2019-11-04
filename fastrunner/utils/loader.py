@@ -19,6 +19,7 @@ from FasterRunner import separator
 
 from fastrunner import models
 from fastrunner.utils.parser import Format
+from FasterRunner.settings import BASE_DIR
 
 logger.setup_logger('INFO')
 
@@ -84,6 +85,12 @@ class FileLoader(object):
         """
         with io.open(binary_file, 'wb') as stream:
             stream.write(data)
+    @staticmethod
+    def copy_file(path, to_path):
+        """
+        copy file to_path
+        """
+        shutil.copyfile(path, to_path)
 
     @staticmethod
     def load_python_module(file_path):
@@ -182,16 +189,20 @@ def load_debugtalk(project):
     """import debugtalk.py in sys.path and reload
         project: int
     """
-    # debugtalk.py
-
-    code = models.Debugtalk.objects.get(project__id=project).code
-    file_path = os.path.join(tempfile.mkdtemp(prefix='FasterRunner'), "debugtalk.py")
-    FileLoader.dump_python_file(file_path, code)
-    debugtalk = FileLoader.load_python_module(os.path.dirname(file_path))
-    shutil.rmtree(os.path.dirname(file_path))
-
-    return debugtalk
-
+    tempfile_path = tempfile.mkdtemp(prefix='tempHttpRunner', dir=os.path.join(BASE_DIR, 'tempWorkDir'))
+    debugtalk_path = os.path.join(tempfile_path, 'debugtalk.py')
+    os.chdir(tempfile_path)
+    try:
+        py_files = models.Pycode.objects.filter(project__id=project)
+        for file in py_files:
+            file_path = os.path.join(tempfile_path, file.name)
+            FileLoader.dump_python_file(file_path, file.code)
+        debugtalk = FileLoader.load_python_module(os.path.dirname(debugtalk_path))
+        return debugtalk, debugtalk_path
+    except Exception as e:
+        os.chdir(BASE_DIR)
+        shutil.rmtree(os.path.dirname(debugtalk_path))
+        raise SyntaxError(str(e))
 
 
 def debug_suite(suite, project, obj, config, save=True):
@@ -205,22 +216,30 @@ def debug_suite(suite, project, obj, config, save=True):
 
     test_sets = []
     debugtalk = load_debugtalk(project)
-    for index in range(len(suite)):
-        # copy.deepcopy 修复引用bug
-        testcases = copy.deepcopy(
-            parse_tests(suite[index], debugtalk, project, name=obj[index]['name'], config=config[index]))
-        test_sets.append(testcases)
+    debugtalk_content = debugtalk[0]
+    debugtalk_path = debugtalk[1]
+    os.chdir(os.path.dirname(debugtalk_path))
+    try:
+        for index in range(len(suite)):
+            testcases = copy.deepcopy(
+                parse_tests(suite[index], debugtalk_content, project, name=obj[index]['name'], config=config[index]))
+            test_sets.append(testcases)
 
-    kwargs = {
-        "failfast": False
-    }
-    runner = HttpRunner(**kwargs)
-    runner.run(test_sets)
-    summary = parse_summary(runner.summary)
-    if save:
-        save_summary("", summary, project, type=1)
+        kwargs = {
+            "failfast": True
+        }
+        runner = HttpRunner(**kwargs)
+        runner.run(test_sets)
+        summary = parse_summary(runner.summary)
+        if save:
+            save_summary("", summary, project, type=1)
 
-    return summary
+        return summary
+    except Exception as e:
+        raise SyntaxError(str(e))
+    finally:
+        os.chdir(BASE_DIR)
+        shutil.rmtree(os.path.dirname(debugtalk_path))
 
 
 def debug_api(api, project, name=None, config=None, save=True):
@@ -238,20 +257,28 @@ def debug_api(api, project, name=None, config=None, save=True):
         """
         api = [api]
 
-    testcase_list = [parse_tests(api, load_debugtalk(project), project, name=name, config=config)]
+    debugtalk = load_debugtalk(project)
+    debugtalk_content = debugtalk[0]
+    debugtalk_path = debugtalk[1]
+    os.chdir(os.path.dirname(debugtalk_path))
+    try:
+        testcase_list = [parse_tests(api, debugtalk_content, project, name=name, config=config)]
 
-    kwargs = {
-        "failfast": False
-    }
+        kwargs = {
+            "failfast": False
+        }
+        runner = HttpRunner(**kwargs)
+        runner.run(testcase_list)
 
-    runner = HttpRunner(**kwargs)
-    runner.run(testcase_list)
-
-    summary = parse_summary(runner.summary)
-    if save:
-        save_summary("", summary, project, type=1)
-
-    return summary
+        summary = parse_summary(runner.summary)
+        if save:
+            save_summary("", summary, project, type=1)
+        return summary
+    except Exception as e:
+        raise SyntaxError(str(e))
+    finally:
+        os.chdir(BASE_DIR)
+        shutil.rmtree(os.path.dirname(debugtalk_path))
 
 
 def load_test(test, project=None):

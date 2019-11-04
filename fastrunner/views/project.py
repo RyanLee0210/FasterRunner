@@ -1,7 +1,9 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
 from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet,ModelViewSet
+from rest_framework import mixins
+from rest_framework import status
 from fastrunner import models, serializers
 from FasterRunner import pagination
 from rest_framework.response import Response
@@ -10,6 +12,7 @@ from fastrunner.utils import prepare
 from fastrunner.utils.decorator import request_log
 from fastrunner.utils.runner import DebugCode
 from fastrunner.utils.tree import get_tree_max_id
+
 
 
 class ProjectView(GenericViewSet):
@@ -242,3 +245,57 @@ class TreeView(APIView):
 #         models.FileBinary.objects.create(**body)
 #
 #         return Response(response.FILE_UPLOAD_SUCCESS)
+class PycodeRunView(GenericViewSet, mixins.RetrieveModelMixin):
+    """
+    驱动代码调试运行
+    """
+    serializer_class = serializers.PycodeSerializer
+
+    def get_queryset(self):
+        project = self.request.query_params["project"]
+        queryset = models.Pycode.objects.filter(project_id=project).order_by('-update_time')
+        return queryset
+
+    @method_decorator(request_log(level='INFO'))
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+
+        debug = DebugCode(serializer.data["code"], serializer.data["project"], serializer.data["name"])
+        debug.run()
+
+        debug_rsp = {
+            "msg": debug.resp
+        }
+        return Response(data=debug_rsp)
+
+
+class PycodeView(ModelViewSet):
+    """
+    驱动代码模块
+    """
+    serializer_class = serializers.PycodeSerializer
+    pagination_class = pagination.MyPageNumberPagination
+
+    def get_queryset(self):
+        project = self.request.query_params["project"]
+        queryset = models.Pycode.objects.filter(project_id=project).order_by('-update_time')
+        if self.action == 'list':
+            queryset = queryset.filter(name__contains=self.request.query_params["search"])
+        return queryset
+
+    @method_decorator(request_log(level='INFO'))
+    def destroy(self, request, *args, **kwargs):
+        if kwargs.get('pk') and int(kwargs['pk']) != -1:
+            instance = self.get_object()
+            if instance.name == 'debugtalk.py':
+                Response(status=status.HTTP_423_LOCKED)
+            else:
+                self.perform_destroy(instance)
+        elif request.data:
+            for content in request.data:
+                self.kwargs['pk'] = content['id']
+                instance = self.get_object()
+                if instance.name != 'debugtalk.py':
+                    self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)

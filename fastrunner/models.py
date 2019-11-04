@@ -17,6 +17,8 @@ class Project(BaseTable):
     desc = models.CharField("简要介绍", max_length=100, null=False)
     responsible = models.CharField("创建人", max_length=20, null=False)
 
+    def __str__(self):
+        return self.name
 
 class Debugtalk(models.Model):
     """
@@ -29,6 +31,24 @@ class Debugtalk(models.Model):
 
     code = models.TextField("python代码", default="# write you code", null=False)
     project = models.OneToOneField(to=Project, on_delete=models.CASCADE)
+
+class Pycode(BaseTable):
+    """
+    驱动文件表
+    """
+
+    class Meta:
+        verbose_name = "驱动文件库"
+        verbose_name_plural = verbose_name
+        unique_together = [['project', 'name']]
+
+    code = models.TextField("python代码", default="# _*_ coding:utf-8 _*_", null=False)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    name = models.CharField(max_length=30, null=False)
+    desc = models.CharField("简要介绍", max_length=100, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Config(BaseTable):
@@ -163,13 +183,4 @@ class Relation(models.Model):
     tree = models.TextField("结构主题", null=False, default=[])
     type = models.IntegerField("树类型", default=1)
 
-[
-    {
-        "name": "testcase",
-        "body": "body",
-        "url": "https://www.baidu.com",
-        "method": "post",
-        "project": "1",
-        "relation": 1
-    }
-]
+

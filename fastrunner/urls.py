@@ -15,9 +15,18 @@ Including another URLconf
 """
 
 from django.urls import path
+from django.conf.urls import url, include
+from rest_framework.routers import DefaultRouter
 from fastrunner.views import project, api, config, schedule, run, suite, report
 
+router = DefaultRouter()
+# 驱动代码
+router.register(r'pycode', project.PycodeView, base_name='pycode')
+router.register(r'runpycode', project.PycodeRunView, base_name="runpycode")
+
+
 urlpatterns = [
+    url(r'^', include(router.urls)),
     # 项目相关接口地址
     path('project/', project.ProjectView.as_view({
         "get": "list",
