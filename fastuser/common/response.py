@@ -39,9 +39,24 @@ USER_NOT_EXISTS = {
     "success": False,
     "msg": "该用户未注册"
 }
+USER_PWD_ERROR = {
+    "code": "0105",
+    "success": False,
+    "msg": "原密码错误"
+}
+CHANGE_PWD_SUCCESS = {
+    "code": "0106",
+    "success": True,
+    "msg": "用户密码更改成功"
+}
 
 LOGIN_SUCCESS = {
     "code": "0001",
     "success": True,
     "msg": "login success"
+}
+CRYPTO_AES_ERROR = {
+    "code": "0201",
+    "success": False,
+    "msg": "AES加密解密出错"
 }

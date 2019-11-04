@@ -302,5 +302,20 @@ HOST_DEL_SUCCESS = {
     'success': True,
     'msg': '域名删除成功'
 }
+EMAIL_STRATEGY_ERROR = {
+    'code': '0201',
+    'success': False,
+    'msg': '邮件发送策略解析失败'
+}
+EMAIL_SEND_SUCCESS = {
+    'code': '0202',
+    'success': True,
+    'msg': '邮件发送成功'
+}
+EMAIL_SEND_ERROR = {
+    'code': '0203',
+    'success': False,
+    'msg': '邮件发送失败'
+}
 
 

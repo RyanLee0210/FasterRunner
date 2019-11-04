@@ -1,15 +1,17 @@
-
+import logging
 from celery import shared_task
 from django.core.exceptions import ObjectDoesNotExist
 from fastrunner import models
 from fastrunner.utils.loader import save_summary, debug_suite, debug_api
-
+from fastrunner.utils.send_email import send_email_reports
+logger = logging.getLogger('FasterRunner')
 
 
 @shared_task
 def async_debug_api(api, project, name, config=None):
     """异步执行api
     """
+    logger.info("async_debug_api start!!!")
     summary = debug_api(api, project, config=config, save=False)
     save_summary(name, summary, project)
 
@@ -18,6 +20,7 @@ def async_debug_api(api, project, name, config=None):
 def async_debug_suite(suite, project, obj, report, config):
     """异步执行suite
     """
+    logger.info("async_debug_suite start!!!")
     summary = debug_suite(suite, project, obj, config=config, save=False)
     save_summary(report, summary, project)
 
@@ -27,8 +30,9 @@ def async_debug_suite(suite, project, obj, report, config):
 def schedule_debug_suite(*args, **kwargs):
     """定时任务
     """
-
+    logger.info("schedule_debug_suite start!!!")
     project = kwargs["project"]
+    task_name = kwargs["taskname"]
     suite = []
     test_sets = []
     config_list = []
@@ -58,4 +62,7 @@ def schedule_debug_suite(*args, **kwargs):
         test_sets.append(testcase_list)
 
     summary = debug_suite(test_sets, project, suite, config_list, save=False)
-    save_summary("", summary, project, type=3)
+    save_summary(task_name, summary, project, type=3)
+
+    email_setting = kwargs
+    send_email_reports(email_setting,summary)

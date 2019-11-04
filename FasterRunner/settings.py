@@ -169,6 +169,9 @@ CORS_ALLOW_HEADERS = (
     'x-requested-with',
 )
 
+EMAIL_SEND_USERNAME = "account"
+EMAIL_SEND_PASSWORD = "password"
+SMPT_SERVER = 'smtp.qq.com'
 djcelery.setup_loader()
 CELERY_ENABLE_UTC = True
 CELERY_TIMEZONE = 'Asia/Shanghai'

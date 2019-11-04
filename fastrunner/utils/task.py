@@ -26,7 +26,10 @@ class Task(object):
             "copy": kwargs["copy"],
             "receiver": kwargs["receiver"],
             "corntab": self.__corntab,
-            "project": self.__project
+            "project": self.__project,
+            # 将定时任务名称存到数据库表的kwargs字段中
+            "taskname": kwargs["name"],
+            "threshold": kwargs["threshold"]
         }
         self.__corntab_time = None
 
@@ -57,8 +60,8 @@ class Task(object):
         if celery_models.PeriodicTask.objects.filter(name__exact=self.__name).count() > 0:
             logger.info("{name} tasks exist".format(name=self.__name))
             return response.TASK_HAS_EXISTS
-
-        if self.__email["strategy"] == '始终发送' or self.__email["strategy"] == '仅失败发送':
+        # 若是在（1-始终发送；2-失败时发送；4-低于阈值时发送）中时，需要发送邮件则验证收件人是否填写
+        if self.__email["strategy"] in ["1","2","4"]:
             if self.__email["receiver"] == '':
                 return response.TASK_EMAIL_ILLEGAL
 

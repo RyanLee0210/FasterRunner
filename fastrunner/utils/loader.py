@@ -12,7 +12,10 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 from httprunner import HttpRunner, logger
+from httprunner.report import render_html_report
 from requests.cookies import RequestsCookieJar
+from requests_toolbelt import MultipartEncoder
+from FasterRunner import separator
 
 from fastrunner import models
 from fastrunner.utils.parser import Format
@@ -180,14 +183,15 @@ def load_debugtalk(project):
         project: int
     """
     # debugtalk.py
-    code = models.Debugtalk.objects.get(project__id=project).code
 
+    code = models.Debugtalk.objects.get(project__id=project).code
     file_path = os.path.join(tempfile.mkdtemp(prefix='FasterRunner'), "debugtalk.py")
     FileLoader.dump_python_file(file_path, code)
     debugtalk = FileLoader.load_python_module(os.path.dirname(file_path))
-
     shutil.rmtree(os.path.dirname(file_path))
+
     return debugtalk
+
 
 
 def debug_suite(suite, project, obj, config, save=True):
@@ -285,7 +289,6 @@ def parse_summary(summary):
     """序列化summary
     """
     for detail in summary["details"]:
-
         for record in detail["records"]:
 
             for key, value in record["meta_data"]["request"].items():
@@ -293,6 +296,9 @@ def parse_summary(summary):
                     record["meta_data"]["request"][key] = value.decode("utf-8")
                 if isinstance(value, RequestsCookieJar):
                     record["meta_data"]["request"][key] = requests.utils.dict_from_cookiejar(value)
+                # 解决无法生成报告的缺陷 TypeError: Object of type MultipartEncoder is not JSON serializable
+                if isinstance(value, MultipartEncoder):
+                    record["meta_data"]["request"][key] = value.fields
 
             for key, value in record["meta_data"]["response"].items():
                 if isinstance(value, bytes):
@@ -303,7 +309,6 @@ def parse_summary(summary):
             if "text/html" in record["meta_data"]["response"]["content_type"]:
                 record["meta_data"]["response"]["content"] = \
                     BeautifulSoup(record["meta_data"]["response"]["content"], features="html.parser").prettify()
-
     return summary
 
 
@@ -321,3 +326,4 @@ def save_summary(name, summary, project, type=2):
         "type": type,
         "summary": json.dumps(summary, ensure_ascii=False),
     })
+

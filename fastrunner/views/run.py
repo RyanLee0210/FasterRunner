@@ -160,11 +160,9 @@ def run_testsuite_pk(request, **kwargs):
 
     test_list = models.CaseStep.objects. \
         filter(case__id=pk).order_by("step").values("body")
-
     project = request.query_params["project"]
     name = request.query_params["name"]
     host = request.query_params["host"]
-
     test_case = []
     config = None
 
@@ -179,9 +177,7 @@ def run_testsuite_pk(request, **kwargs):
             continue
 
         test_case.append(parse_host(host, body))
-
     summary = loader.debug_api(test_case, project, name=name, config=parse_host(host, config))
-
     return Response(summary)
 
 
@@ -264,6 +260,7 @@ def run_test(request):
         config = eval(models.Config.objects.get(project=project, name=config["name"]).body)
 
     summary = loader.debug_api(parse_host(host, loader.load_test(body)), project, config=parse_host(host, config))
+
 
     return Response(summary)
 

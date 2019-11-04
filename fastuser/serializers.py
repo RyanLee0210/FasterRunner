@@ -27,3 +27,11 @@ class UserInfoSerializer(serializers.Serializer):
         实现create方法
         """
         return models.UserInfo.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.username = validated_data.get('email', instance.username)
+        instance.password = validated_data.get('password', instance.password)
+        instance.email = validated_data.get('email', instance.email)
+        # 更新暂时先不实现
+        return instance
+
