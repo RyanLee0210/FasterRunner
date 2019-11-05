@@ -63,3 +63,6 @@ celery multi start w1 -A FasterRunner -l info --logfile=./logs/worker.log
 nohup python3 manage.py celery beat -l info > ./logs/beat.log 2>&1 &
 ```
 
+## docker部署
+
+详情见：https://github.com/RyanLee0210/FasterRunnerWeb
