@@ -20,7 +20,7 @@ class crypto_aes(object):
     # 补足字符串长度为16的倍数
     def __add_to_16(self,text):
         '''
-        :param text:需要调整的文本，string，"{\"account\":\"18823370210\",\"password\":\"Abc1234567\",\"captcha\":\"3534b\"}"
+        :param text:需要调整的文本，string，"{\"account\":\"18812345678\",\"password\":\"Abc1234567\",\"captcha\":\"3534b\"}"
         :return:返回调整后的文本，string
         '''
         while len(text) % 16 != 0:
@@ -31,7 +31,7 @@ class crypto_aes(object):
         '''
         解密函数
         :param text: 已经加密的密文，string，'+KhQ7gOuHKx+pXGGZubK/uih8Gc4/VJ/L4eRwMaIIq7WuPxWRyF12PF+xbz+B1Dfi81dRsL1v3VP0ntLIHx00a5fBHaNcmQfa9QTDfteIrM='
-        :return: 返回解密后的明文，string，"{\"account\":\"18823370210\",\"password\":\"Abc1234567\",\"captcha\":\"3534b\"}"
+        :return: 返回解密后的明文，string，"{\"account\":\"18812345678\",\"password\":\"Abc1234567\",\"captcha\":\"3534b\"}"
         '''
         decrypted_text = self.__aes.decrypt(base64.decodebytes(bytes(text, encoding='utf8'))).decode("utf8")  # 解密
         decrypted_text = decrypted_text[:-ord(decrypted_text[-1])]  # 去除多余补位
@@ -40,7 +40,7 @@ class crypto_aes(object):
     def encrypt_text(self,text):
         '''
         加密函数
-        :param text: 需要加密的明文，string，"{\"account\":\"18823370210\",\"password\":\"Abc1234567\",\"captcha\":\"3534b\"}"
+        :param text: 需要加密的明文，string，"{\"account\":\"18812345678\",\"password\":\"Abc1234567\",\"captcha\":\"3534b\"}"
         :return: 已经加密的密文，string，'+KhQ7gOuHKx+pXGGZubK/uih8Gc4/VJ/L4eRwMaIIq7WuPxWRyF12PF+xbz+B1Dfi81dRsL1v3VP0ntLIHx00a5fBHaNcmQfa9QTDfteIrM='
         '''
         # 如果text是dict类型数据，先转换成json字符串
