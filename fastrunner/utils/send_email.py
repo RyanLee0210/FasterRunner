@@ -14,6 +14,12 @@ from FasterRunner.settings import EMAIL_SEND_USERNAME, EMAIL_SEND_PASSWORD ,SMPT
 
 
 def send_email_reports(email_setting,summary):
+    """
+    根据传入的邮件策略发送邮件
+    :param email_setting: 邮件策略;string;"1"--代表始终发送
+    :param summary: 测试结果集;dict;{}
+    :return: response: 统一的结果体;dict;{}
+    """
 
     if '@sina.com' in EMAIL_SEND_USERNAME:
         smtp_server = 'smtp.sina.com'
@@ -68,6 +74,11 @@ def send_email_reports(email_setting,summary):
         return response.EMAIL_SEND_SUCCESS
 
 def email_context(summary):
+    """
+    根据测试结果集构造邮件正文的html表格
+    :param summary: 测试结果集;dict;{}
+    :return: mail_body; html表格;string;""
+    """
     successes = 0
     total = 0
     failures = 0
