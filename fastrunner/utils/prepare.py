@@ -1,6 +1,7 @@
 from fastrunner import models
 from fastrunner.utils.parser import Format
 from djcelery import models as celery_models
+import json
 
 
 def get_counter(model, pk=None):
@@ -24,6 +25,7 @@ def get_project_detail(pk):
     report_count = get_counter(models.Report, pk=pk)
     host_count = get_counter(models.HostIP, pk=pk)
     task_count = celery_models.PeriodicTask.objects.filter(description=pk).count()
+    task_summary = get_project_task_summary(pk)
 
     return {
         "api_count": api_count,
@@ -32,8 +34,93 @@ def get_project_detail(pk):
         "config_count": config_count,
         "variables_count": variables_count,
         "report_count": report_count,
-        "host_count":host_count
+        "host_count": host_count,
+        "task_summary": task_summary
     }
+
+def get_project_task_summary(pk):
+    '''
+    统计最近定时任务执行的测试用例集统计情况
+    :param pk: 项目ID，int，9
+    :return: 返回统计结果集
+    '''
+    queryset = models.Report.objects.filter(project__id=pk,type=3).order_by("-create_time")[0:20]
+    res = []
+    for item in queryset:
+        summary = json.loads(item.summary)
+        successes = summary['stat']['successes']
+        failures = summary['stat']['failures']
+        errors = summary['stat']['errors']
+
+        record = {
+            'id': item.id ,
+            'create_time': item.create_time ,
+            'name' : item.name ,
+            'successes': successes ,
+            'failures' : failures,
+            'errors' : errors
+        }
+        res.append(record)
+
+    # 此处为项目概况的echarts的属性
+    rsp = {
+            'title': {
+                'text': "最近执行的定时任务统计"
+            },
+            'legend': {
+                'data': ["通过用例数","失败用例数","异常用例数"]
+            },
+            'xAxis': {
+                'name': "报告ID",
+                'data': []
+            },
+            'yAxis': {
+                'name': "用例数(个)"
+            },
+            'series': [
+                # 任务名称
+                {
+                    'name': "任务名称",
+                    'type': "line",
+                    'data': []
+                },
+                # 执行时间
+                {
+                    'name': "执行时间",
+                    'type': "line",
+                    'data': [],
+                },
+                # 通过用例数
+                {
+                    'name': "通过用例数",
+                    'type': "bar",
+                    'stack': "总量",
+                    'data': [],
+                },
+                # 失败用例数
+                {
+                    'name': "失败用例数",
+                    'type': "bar",
+                    'stack': "总量",
+                    'data': []
+                },
+                # 异常用例数
+                {
+                    'name': "异常用例数",
+                    'type': "bar",
+                    'stack': "总量",
+                    'data': []
+                }
+            ]
+        }
+    for rd in res:
+        rsp['xAxis']['data'].append(rd['id']);
+        rsp['series'][0]['data'].append(rd['name'])
+        rsp['series'][1]['data'].append(rd['create_time'])
+        rsp['series'][2]['data'].append(rd['successes'])
+        rsp['series'][3]['data'].append(rd['failures'])
+        rsp['series'][4]['data'].append(rd['errors'])
+    return rsp
 
 
 def project_init(project):

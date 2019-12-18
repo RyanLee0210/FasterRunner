@@ -12,7 +12,8 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 import djcelery
-
+# 用于邮件模板中的url链接访问，提供点击跳转到此平台Web上
+HOST_URL = "http://127.0.0.1:8090"
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -83,9 +84,9 @@ WSGI_APPLICATION = 'FasterRunner.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'db_name',
-        'USER': 'username',
-        'PASSWORD': 'password',
+        'NAME': 'FasterRunner',
+        'USER': 'root',
+        'PASSWORD': 'zdhcs@W123',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }

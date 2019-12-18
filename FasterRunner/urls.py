@@ -22,7 +22,7 @@ from django.conf.urls import url
 urlpatterns = [
     path('api/user/', include('fastuser.urls')),
     path('api/fastrunner/', include('fastrunner.urls')),
-    ##¡¡¾²Ì¬×ÊÔ´
-    url(r'^static/(?P<path>.*)$', static.serve,
+
+    url(r'^djangostatic/(?P<path>.*)$', static.serve,
       {'document_root': settings.STATIC_ROOT}, name='static'),
 ]

@@ -10,7 +10,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from fastrunner.utils import response
-from FasterRunner.settings import EMAIL_SEND_USERNAME, EMAIL_SEND_PASSWORD ,SMPT_SERVER
+from FasterRunner.settings import EMAIL_SEND_USERNAME, EMAIL_SEND_PASSWORD ,SMPT_SERVER , HOST_URL
 
 
 def send_email_reports(email_setting,summary):
@@ -115,7 +115,11 @@ def email_context(summary):
     		<thead>
     			<tr bgcolor="#F3F3F3">
     				<td style="text-align:center" colspan="4"><b>接口测试报告</b></td>    
-    			</tr>                           
+    			</tr>
+    			<tr>
+                    <td bgcolor="#F3F3F3" style="width:80px"><b>详情：</b></td>
+                    <td colspan="4"><a href=""" + HOST_URL + """>接口平台...</a></td>
+                </tr>                           
     			<tr bgcolor="#F3F3F3">
     				<td><b>总用例数</b></td>
     				<td><b>通过数</b></td>
